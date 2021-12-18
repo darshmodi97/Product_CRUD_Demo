@@ -1,0 +1,144 @@
+{% extends 'product/base.html' %}
+
+{% block content %}
+    <h1>Welcome {{ request.user }}</h1>
+    <button class="btn btn-primary" onclick="location.href={% url 'create-category' %}">Create Category</button>
+    <button class="btn btn-primary" onclick="location.href={% url 'create-product' %}">Create Product</button>
+    {% if products %}
+        <div>
+         <a style="text-decoration: blue" href="/">Home &nbsp;</a>
+
+        {% if common_tags %}
+            tags:
+            {% for tag in common_tags %}
+                <a style="text-decoration: blue" href="{% url 'tag' tag.slug %}">#{{ tag.name }} &nbsp;</a>
+            {% endfor %}
+        {% else %}
+            tag: {{ current_tag }}
+            {% endif %}
+        </div>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Category</th>
+              <th scope="col">Tags</th>
+              <th scope="col">Image</th>
+              <th scope="col">View</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr id="product-{{ product.id }}">
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category }}</td>
+                <td>
+                {% for tag in product.tags.all %}
+                    <a href="{% url 'tag' tag.slug  %}">{{ tag.name }}</a>
+                {% endfor %}
+                </td>
+                <td><a href="{{ product.image.url }}" class="swipebox"><img src="{{ product.image.url }}" width="100px" height="50" alt="image"></a> </td>
+                <td><button class="btn btn-dark view_data" data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-url="{% url 'view_model' product.id %}" data-id="{{ product.id }}">View</button></td>
+                <td><a href="{% url 'edit' product.id %}"><i class="fa fa-edit" style="font-size:24px"></i></a>&nbsp;
+                    <a href="#"><i class="fa fa-trash-o my_delete" data-url="{% url 'delete' product.id %}" style="font-size:24px"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    {% else %}
+        <p> you don't have any products.</p>
+    {% endif %}
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="model_title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <a id="img" href="" class="swipebox"><img width="100%" height="400" src="" id="image_show" /></a>
+
+          <div class="row">
+              <div class="col-sm-3">
+                  <h5>Name:</h5>
+              </div>
+              <div class="col-sm-9 text-left">
+                  <p id="name"></p>
+              </div>
+              <div class="col-sm-3">
+                  <h5>Tags:</h5>
+              </div>
+              <div class="col-sm-9 text-left">
+                  <p id="tags"></p>
+              </div>
+              <div class="col-sm-3">
+                  <h5>Category:</h5>
+              </div>
+              <div class="col-sm-9 text-left">
+                  <p id="category"></p>
+              </div>
+              <div class="col-sm-3">
+                  <h5>Description:</h5>
+              </div>
+              <div class="col-sm-9 text-left ">
+                  <p id="description"></p>
+              </div>
+
+          </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+ {% block extra_js %}
+
+  <script type="text/javascript">
+    jQuery(function($) {
+	$(".swipebox").swipebox();
+    });
+
+    $('.view_data').one('click', function (e) {
+        e.preventDefault();
+        var url = $(this).attr('data-url')
+         $.ajax({
+             url: url,
+             success: function(response){
+                 var data = response.data[0]
+                 var tags = response.tags
+                $('#model_title').text(data.name);
+                $('#img, #image_show').attr('href', response.image);
+                $('#image_show').attr('src', response.image);
+                $('#name').text(data.name);
+                $('#tags').text(tags);
+                $('#category').text(response.category);
+                $('#description').css('word-wrap', 'break-word');
+                $('#description').text(data.description);
+             }
+         })
+    })
+
+    $('.my_delete').one('click', function (e) {
+        e.preventDefault();
+        var url = $(this).attr('data-url')
+         $.ajax({
+             url: url,
+             success: function(response){
+                 if(response.status == true){
+                     $('#product-'+response.id).remove();
+                     if (response.count == 0){
+                         location.reload();
+                     }
+                 }
+             }
+         })
+    })
+</script>
+{% endblock extra_js %}
