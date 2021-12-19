@@ -22,6 +22,7 @@ def index(request):
     return render(request, template, context)
 
 
+@login_required(login_url='login')
 def tag_filter(request, slug):
     context = {'products': Product.objects.filter(tags__slug=slug), 'current_tag': slug}
     return render(request, 'product/index.html', context)
@@ -56,7 +57,7 @@ def loginview(request):
             messages.error(request, f'username or password is incorrect.')
 
     if request.user.is_authenticated:
-        return redirect('todo:todo-list')
+        return redirect('/')
     form = AuthenticationForm()
     return render(request, 'product/login.html', {'form': form, })
 
@@ -66,6 +67,7 @@ def LogoutView(request):
     return redirect('index')
 
 
+@login_required(login_url='login')
 def create_product(request):
     if request.method == 'POST':
         form = ProductCreationForm(request.POST, request.FILES)
@@ -80,6 +82,7 @@ def create_product(request):
     return render(request, 'product/create_product.html', {'form': form, 'tags': tags})
 
 
+@login_required(login_url='login')
 def create_category(request):
     if request.method == 'POST':
         form = CategoryCreationForm(request.POST)
@@ -92,6 +95,7 @@ def create_category(request):
         return render(request, 'product/create_category.html', {'form': form})
 
 
+@login_required(login_url='login')
 def view_data(request, pk):
     if request.is_ajax():
         product = Product.objects.filter(id=pk).values()
@@ -103,6 +107,7 @@ def view_data(request, pk):
     return JsonResponse({'status': False})
 
 
+@login_required(login_url='login')
 def delete_product(request, pk):
     if request.is_ajax():
         Product.objects.get(id=pk).delete()
@@ -111,6 +116,7 @@ def delete_product(request, pk):
     return JsonResponse({'status': False, 'id': pk})
 
 
+@login_required(login_url='login')
 def edit_product(request, pk):
     product = Product.objects.get(id=pk)
     if request.method == 'POST':
